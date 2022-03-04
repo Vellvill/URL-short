@@ -1,0 +1,13 @@
+---
+
+is_debug: true
+listen:
+  type: port
+  bind_ip: localhost
+  port: 8081
+storage:
+  host: localhost
+  port: 5432
+  database: postgres
+  username: postgres
+  password: 12345

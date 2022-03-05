@@ -2,6 +2,7 @@ package service
 
 import (
 	"NewOne/internal/models"
+	"NewOne/internal/utils"
 	"context"
 	"fmt"
 	"log"
@@ -16,6 +17,7 @@ func (i *Implementation) AddNewUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f := models.NewModelURL(0, keys[0], "", 0, "")
+	utils.Check(f)
 	err := i.repo.AddLink(context.TODO(), f)
 	if err != nil {
 		log.Fatal(err)

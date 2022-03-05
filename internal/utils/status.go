@@ -1,19 +1,20 @@
 package utils
 
 import (
+	"NewOne/internal/models"
 	"fmt"
 	"net/http"
 )
 
-func Check(s chan string, url string) {
-	resp, err := http.Get(url)
+func Check(s *models.Url) {
+	resp, err := http.Get(s.Longurl)
 	if err != nil {
-		s <- fmt.Sprintf("Ошибка соединения. %s\n", err)
+		s.Status = fmt.Sprintf("Error conntecton, %s", err)
 	}
 
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		s <- fmt.Sprintf("Ошибка, http-status: %s\n", resp.StatusCode)
+		s.Status = fmt.Sprintf("Error conntecton, %s", err)
 	}
-	s <- fmt.Sprintf("Онлайн. http-статус: %d\n", resp.StatusCode)
+	s.Status = fmt.Sprintf("Online")
 }

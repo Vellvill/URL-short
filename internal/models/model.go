@@ -5,8 +5,9 @@ type Url struct {
 	Longurl           string `json:"longurl"`
 	Shorturl          string `json:"shorturl"`
 	Numbersofredirect int    `json:"numbersofredirect"`
+	Status            string `json:"status"`
 }
 
-func NewModelURL(ID int, Longurl, Shorturl string, Numbersofredirect int) *Url {
-	return &Url{ID: ID, Longurl: Longurl, Shorturl: Shorturl, Numbersofredirect: Numbersofredirect}
+func NewModelURL(ID int, Longurl, Shorturl string, Numbersofredirect int, Status string) *Url {
+	return &Url{ID: ID, Longurl: Longurl, Shorturl: Shorturl, Numbersofredirect: Numbersofredirect, Status: Status}
 }

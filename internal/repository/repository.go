@@ -29,7 +29,10 @@ func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			switch {
 			case pgErr.Code == "23505":
-				r.client.QueryRow(ctx, "select shorturl from public.url where longurl = $1", url.Longurl).Scan(&url.Shorturl)
+				err = r.client.QueryRow(ctx, "select shorturl from public.url where longurl = $1", url.Longurl).Scan(&url.Shorturl)
+				if err != nil {
+					log.Fatal(err)
+				}
 				return nil
 			default:
 				newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.SQLState()))
@@ -41,17 +44,17 @@ func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
 	return nil
 }
 
-func (r *repository) GetLink(ctx context.Context, shortUrl string) string {
+func (r *repository) GetLink(ctx context.Context, shortUrl string) (string, error) {
 	url := models.NewModelURL(0, "", shortUrl, 0, "")
 	err := r.client.QueryRow(ctx, "SELECT longurl FROM public.url WHERE shorturl = $1", url.Shorturl).Scan(&url.Longurl)
 	if err != nil {
-		return ""
+		return "", err
 	}
 	_, err = r.client.Exec(ctx, "update public.url set numbersofredirect = numbersofredirect + 1 where shorturl = $1", url.Shorturl)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return url.Longurl
+	return url.Longurl, nil
 }
 
 func (r *repository) GetStats(ctx context.Context, url *models.Url) error {
@@ -100,18 +103,18 @@ func (r *repository) Status(ctx context.Context, start <-chan struct{}) {
 			go func(wg *sync.WaitGroup, mu *sync.Mutex) {
 				rows, err := r.client.Query(ctx, "SELECT longurl FROM public.url")
 				if err != nil {
-					return
+					log.Fatal(err)
 				}
 				for rows.Next() {
 					wg.Add(1)
 					var url models.Url
 					mu.Lock()
-					err1 := rows.Scan(&url.Longurl)
+					err = rows.Scan(&url.Longurl)
 					urlchan <- url
 					mu.Unlock()
 					wg.Done()
-					if err1 != nil {
-						return
+					if err != nil {
+						log.Fatal(err)
 					}
 				}
 			}(wg, mu)
@@ -134,7 +137,7 @@ func (r *repository) Status(ctx context.Context, start <-chan struct{}) {
 					case x := <-answer:
 						_, err := r.client.Exec(ctx, "update public.url set status = $1 where longurl = $2", x.Status, x.Longurl)
 						if err != nil {
-							log.Fatal()
+							log.Fatal(err)
 						}
 					default:
 						time.Sleep(1 * time.Second)

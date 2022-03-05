@@ -27,7 +27,10 @@ func (i *Implementation) AddNewUrl(w http.ResponseWriter, r *http.Request) {
 
 func (i *Implementation) RedirectToUrl(w http.ResponseWriter, r *http.Request) {
 	shorturl := strings.Trim(r.URL.Path, "/")
-	link := i.repo.GetLink(context.TODO(), shorturl)
+	link, err := i.repo.GetLink(context.TODO(), shorturl)
+	if err != nil {
+		log.Fatal(err)
+	}
 	http.Redirect(w, r, link, 301) //
 }
 

@@ -6,7 +6,7 @@ import (
 )
 
 type Repository interface {
-	GetLink(ctx context.Context, shortUrl string) string
+	GetLink(ctx context.Context, shortUrl string) (string, error)
 	AddLink(ctx context.Context, url *models.Url) error
 	GetStats(ctx context.Context, url *models.Url) error
 	Status(ctx context.Context, start <-chan struct{})

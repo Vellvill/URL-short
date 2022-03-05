@@ -13,6 +13,5 @@ func Encode(s []rune) string {
 	for i := 0; i < 10; i++ {
 		r = append(r, crypto[rand.Intn(len(crypto)-0)+0])
 	}
-
 	return string(r)
 }

@@ -18,13 +18,28 @@ type repository struct {
 }
 
 func NewRepository(client postgres.Client) usecases.Repository {
-	return &repository{
+	repo := &repository{
 		client: client,
+	}
+	ch := make(chan struct{})
+	repo.Status(context.TODO(), ch)
+	startStatus(ch)
+	return repo
+
+}
+
+func startStatus(startSt chan struct{}) {
+	startSt <- struct{}{}
+	for {
+		select {
+		case <-time.After(10 * time.Minute):
+			startSt <- struct{}{}
+		}
 	}
 }
 
 func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
-	if err := r.client.QueryRow(ctx, "insert into url (longurl, shorturl, numbersofredirect, status) values ($1, $2, $3, $4) returning shorturl", url.Longurl, utils.Encode([]rune(url.Longurl)), url.Numbersofredirect, url.Status).Scan(&url.Shorturl); err != nil {
+	if err := r.client.QueryRow(ctx, "insert into url (longurl, shorturl, numbersofredirect, status) values ($1, $2, $3, $4) returning shorturl", url.Longurl, utils.Encode(), url.Numbersofredirect, url.Status).Scan(&url.Shorturl); err != nil {
 		//может быть nil в контексте таблицы
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			switch {

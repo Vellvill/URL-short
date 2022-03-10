@@ -13,15 +13,24 @@ import (
 func (i *Implementation) AddNewUrl(w http.ResponseWriter, r *http.Request) {
 	keys, ok := r.URL.Query()["url"]
 	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("need to add full url"))
 		return
 	}
+
 	f := models.NewModelURL(0, keys[0], "", 0, "")
-	utils.Check(f)
-	err := i.repo.AddLink(context.TODO(), f)
-	if err != nil {
-		log.Fatal(err)
+	if err := utils.Check(f); err != nil {
+
 	}
+
+	err := i.repo.AddLink(context.TODO(), f)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("your short url = %s", f.Shorturl)))
 }
 

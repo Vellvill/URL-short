@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"time"
 )
 
 func main() {
@@ -24,10 +23,6 @@ func main() {
 	repo := repository.NewRepository(client)
 
 	impl := service.New(repo)
-
-	startSt := make(chan struct{})
-	go startStatus(startSt)
-	go repo.Status(context.TODO(), startSt)
 
 	http.HandleFunc("/add", impl.AddNewUrl)
 
@@ -45,18 +40,10 @@ func start(cfg *config.Config) {
 	if err != nil {
 		log.Fatal()
 	}
+
 	if err = http.Serve(listner, nil); err != nil {
 		log.Fatal()
 	}
-	fmt.Printf("server is listening %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
-}
 
-func startStatus(startSt chan struct{}) {
-	startSt <- struct{}{}
-	for {
-		select {
-		case <-time.After(10 * time.Minute):
-			startSt <- struct{}{}
-		}
-	}
+	fmt.Printf("server is listening %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
 }

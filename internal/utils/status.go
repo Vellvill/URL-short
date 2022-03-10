@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func Check(s *models.Url) {
+func Check(s *models.Url) error {
 	resp, err := http.Get(s.Longurl)
 	if err != nil {
 		s.Status = fmt.Sprintf("Error conntecton, %s", err)
@@ -17,4 +17,5 @@ func Check(s *models.Url) {
 		s.Status = fmt.Sprintf("Error conntecton, %s", err)
 	}
 	s.Status = fmt.Sprintf("Online")
+	return err
 }

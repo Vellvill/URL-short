@@ -7,7 +7,7 @@ import (
 
 var crypto []rune = []rune("1234567890qwertyuiopQWERTYUIIOPasdfghjklASDFGHJKLzxcvbnmZXCVBNM")
 
-func Encode(s []rune) string {
+func Encode() string {
 	r := []rune{}
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 10; i++ {

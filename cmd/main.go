@@ -28,9 +28,9 @@ func main() {
 
 	http.HandleFunc("/", impl.RedirectToUrl)
 
-	http.HandleFunc("/getstats/", impl.CheckStats)
+	http.HandleFunc("/get_stats/", impl.CheckStats)
 
-	http.HandleFunc("/checkstatus", impl.CheckStatus)
+	http.HandleFunc("/check_status", impl.CheckStatus)
 
 	start(cfg)
 }

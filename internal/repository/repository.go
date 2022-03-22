@@ -116,7 +116,7 @@ func (r *repository) Status(ctx context.Context, start <-chan struct{}) {
 			mu := new(sync.Mutex)
 			wg := new(sync.WaitGroup)
 			go func(wg *sync.WaitGroup, mu *sync.Mutex) {
-				rows, err := r.client.Query(ctx, "SELECT longurl FROM public.url")
+				rows, err := r.client.Query(ctx, "SELECT longurl FROM public.url order by url.id limit 300")
 				if err != nil {
 					log.Fatal(err)
 				}

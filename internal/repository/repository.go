@@ -138,7 +138,10 @@ func (r *repository) Status(ctx context.Context, start <-chan struct{}) {
 				for {
 					select {
 					case x := <-urlchan:
-						utils.Check(&x)
+						err := utils.Check(&x)
+						if err != nil {
+							fmt.Println(err)
+						}
 						answer <- x
 					default:
 						time.Sleep(1 * time.Second)

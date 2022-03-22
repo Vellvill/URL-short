@@ -12,7 +12,12 @@ func Check(s *models.Url) error {
 		s.Status = fmt.Sprintf("Error conntecton, %s", err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 	if resp.StatusCode != 200 {
 		s.Status = fmt.Sprintf("Error conntecton, %s", err)
 	}

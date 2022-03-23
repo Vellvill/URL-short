@@ -21,21 +21,25 @@ func NewRepository(client postgres.Client) usecases.Repository {
 	repo := &repository{
 		client: client,
 	}
-	ch := make(chan struct{})
-	repo.Status(context.TODO(), ch)
-	startStatus(ch)
+	chStart := make(chan struct{}, 1)
+	chDone := make(chan struct{})
+	chStart <- struct{}{}
+	go repo.Status(context.TODO(), chStart, chDone)
+	startStatus(chStart, chDone)
 	return repo
-
 }
 
-func startStatus(startSt chan struct{}) {
-	startSt <- struct{}{}
-	for {
-		select {
-		case <-time.After(10 * time.Minute):
-			startSt <- struct{}{}
+func startStatus(chStart chan<- struct{}, chDone <-chan struct{}) {
+	go func() {
+		for {
+			select {
+			case <-chDone:
+				chStart <- struct{}{}
+			default:
+				time.Sleep(10 * time.Minute)
+			}
 		}
-	}
+	}()
 }
 
 func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
@@ -107,63 +111,45 @@ func (r *repository) FindAll(ctx context.Context) (u []models.Url, err error) {
 	return urls, nil
 }
 
-func (r *repository) Status(ctx context.Context, start <-chan struct{}) {
+func (r *repository) Status(ctx context.Context, ChStart <-chan struct{}, done chan<- struct{}) {
 	for {
 		select {
-		case <-start:
-			urlchan := make(chan models.Url)
-			answer := make(chan models.Url)
-			mu := new(sync.Mutex)
+		case <-ChStart:
 			wg := new(sync.WaitGroup)
-			go func(wg *sync.WaitGroup, mu *sync.Mutex) {
-				rows, err := r.client.Query(ctx, "SELECT longurl FROM public.url order by url.id limit 300")
+			rows, err := r.client.Query(ctx, "SELECT longurl FROM public.url order by url.id limit 300")
+			if err != nil {
+				log.Println(err)
+			}
+			for rows.Next() {
+				var url models.Url
+				err = rows.Scan(&url.Longurl)
 				if err != nil {
-					log.Fatal(err)
+					panic(err)
 				}
-				for rows.Next() {
+				go func(url models.Url) {
+					defer wg.Done()
 					wg.Add(1)
-					var url models.Url
-					mu.Lock()
-					err = rows.Scan(&url.Longurl)
-					urlchan <- url
-					mu.Unlock()
-					wg.Done()
+					err = utils.Check(&url)
 					if err != nil {
-						log.Fatal(err)
+						log.Println(err)
 					}
-				}
-			}(wg, mu)
-			go func(answer chan models.Url, urlchan chan models.Url, wg *sync.WaitGroup) {
-				wg.Wait()
-				for {
-					select {
-					case x := <-urlchan:
-						err := utils.Check(&x)
-						if err != nil {
-							fmt.Println(err)
-						}
-						answer <- x
-					default:
-						time.Sleep(1 * time.Second)
+					q := `
+						UPDATE 
+    						public.url 
+						SET 
+    						status = $1 
+						where 
+      						longurl = $2
+`
+					if _, err = r.client.Exec(ctx, q, url.Status, url.Longurl); err != nil {
+						log.Println(err)
 					}
-				}
-			}(answer, urlchan, wg)
-			go func(answer chan models.Url, wg *sync.WaitGroup) {
-				wg.Wait()
-				for {
-					select {
-					case x := <-answer:
-						_, err := r.client.Exec(ctx, "update public.url set status = $1 where longurl = $2", x.Status, x.Longurl)
-						if err != nil {
-							log.Fatal(err)
-						}
-					default:
-						time.Sleep(1 * time.Second)
-					}
-				}
-			}(answer, wg)
+				}(url)
+			}
+			wg.Wait()
+			done <- struct{}{}
 		default:
-			time.Sleep(1 * time.Minute)
+			time.Sleep(10 * time.Minute)
 		}
 	}
 }

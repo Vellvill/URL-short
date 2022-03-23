@@ -9,9 +9,8 @@ import (
 func Check(s *models.Url) error {
 	resp, err := http.Get(s.Longurl)
 	if err != nil {
-		s.Status = fmt.Sprintf("Error conntecton, %s", err)
+		return err
 	}
-
 	defer func() {
 		err = resp.Body.Close()
 		if err != nil {
@@ -22,5 +21,5 @@ func Check(s *models.Url) error {
 		s.Status = fmt.Sprintf("Error conntecton, %s", err)
 	}
 	s.Status = fmt.Sprintf("Online")
-	return err
+	return nil
 }

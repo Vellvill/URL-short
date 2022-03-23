@@ -7,6 +7,7 @@ import (
 	"NewOne/internal/repository"
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net"
 	"net/http"
@@ -31,6 +32,8 @@ func main() {
 	http.HandleFunc("/get_stats/", impl.CheckStats)
 
 	http.HandleFunc("/check_status", impl.CheckStatus)
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	start(cfg)
 }

@@ -23,6 +23,7 @@ func NewRepository(client postgres.Client) usecases.Repository {
 	}
 	chStart := make(chan struct{}, 1)
 	chDone := make(chan struct{})
+
 	chStart <- struct{}{}
 	go repo.Status(context.TODO(), chStart, chDone)
 	startStatus(chStart, chDone)
@@ -43,14 +44,14 @@ func startStatus(chStart chan<- struct{}, chDone <-chan struct{}) {
 }
 
 func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
-	if err := r.client.QueryRow(ctx, "insert into url (longurl, shorturl, numbersofredirect, status) values ($1, $2, $3, $4) returning shorturl", url.Longurl, utils.Encode(), url.Numbersofredirect, url.Status).Scan(&url.Shorturl); err != nil {
+	if err := r.client.QueryRow(ctx, "insert into url (longurl, shorturl, numbersofredirect) values ($1, $2, $3) returning shorturl", url.Longurl, utils.Encode(), url.Numbersofredirect).Scan(&url.Shorturl); err != nil {
 		//может быть nil в контексте таблицы
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			switch {
 			case pgErr.Code == "23505":
 				err = r.client.QueryRow(ctx, "select shorturl from public.url where longurl = $1", url.Longurl).Scan(&url.Shorturl)
 				if err != nil {
-					log.Fatal(err)
+					log.Println(err)
 				}
 				return nil
 			default:
@@ -71,7 +72,7 @@ func (r *repository) GetLink(ctx context.Context, shortUrl string) (string, erro
 	}
 	_, err = r.client.Exec(ctx, "update public.url set numbersofredirect = numbersofredirect + 1 where shorturl = $1", url.Shorturl)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return url.Longurl, nil
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/ilyakaznacheev/cleanenv"
+	"log"
 	"sync"
 )
 
@@ -29,8 +30,12 @@ var once sync.Once   //1 раз
 func GetConfig() *Config {
 	once.Do(func() {
 		instance = &Config{}
-		if err := cleanenv.ReadConfig("config.yml", instance); err != nil { //парсинг
-			cleanenv.GetDescription(instance, nil)
+		//парсинг
+		if err := cleanenv.ReadConfig("config.yml", instance); err != nil {
+			_, err = cleanenv.GetDescription(instance, nil)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	})
 	return instance

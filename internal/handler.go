@@ -2,7 +2,6 @@ package service
 
 import (
 	"NewOne/internal/models"
-	"NewOne/internal/utils"
 	"context"
 	"fmt"
 	"log"
@@ -19,9 +18,6 @@ func (i *Implementation) AddNewUrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	f := models.NewModelURL(0, keys[0], "", 0, "")
-	if err := utils.Check(f); err != nil {
-
-	}
 
 	err := i.repo.AddLink(context.TODO(), f)
 
@@ -38,7 +34,7 @@ func (i *Implementation) RedirectToUrl(w http.ResponseWriter, r *http.Request) {
 	shorturl := strings.Trim(r.URL.Path, "/")
 	link, err := i.repo.GetLink(context.TODO(), shorturl)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	http.Redirect(w, r, link, 301) //
 }

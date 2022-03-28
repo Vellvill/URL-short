@@ -3,6 +3,7 @@ package main
 import (
 	"NewOne/config"
 	service "NewOne/internal"
+	middleware "NewOne/internal/metrics"
 	"NewOne/internal/postgres"
 	"NewOne/internal/repository"
 	"context"
@@ -25,15 +26,17 @@ func main() {
 
 	impl := service.New(repo)
 
+	metricsMiddleware := middleware.NewMetricsMiddleware()
+
+	http.Handle("/metrics", promhttp.Handler())
+
 	http.HandleFunc("/add", impl.AddNewUrl)
 
-	http.HandleFunc("/", impl.RedirectToUrl)
+	http.HandleFunc("/", metricsMiddleware.Metrics(impl.RedirectToUrl))
 
 	http.HandleFunc("/get_stats/", impl.CheckStats)
 
 	http.HandleFunc("/check_status", impl.CheckStatus)
-
-	http.Handle("/metrics", promhttp.Handler())
 
 	start(cfg)
 }
@@ -48,5 +51,5 @@ func start(cfg *config.Config) {
 		log.Fatal()
 	}
 
-	fmt.Printf("server is listening %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
+	log.Printf("server is listening %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
 }

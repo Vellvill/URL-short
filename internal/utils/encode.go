@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var crypto []rune = []rune("1234567890qwertyuiopQWERTYUIIOPasdfghjklASDFGHJKLzxcvbnmZXCVBNM")
+var crypto = []rune("1234567890qwertyuiopQWERTYUIIOPasdfghjklASDFGHJKLzxcvbnmZXCVBNM")
 
 func Encode() string {
 	r := []rune{}

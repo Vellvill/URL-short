@@ -26,7 +26,7 @@ func (i *Implementation) AddNewUrl(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK) //
 	w.Write([]byte(fmt.Sprintf("your short url = %s", f.Shorturl)))
 }
 

@@ -1,15 +1,18 @@
-FROM golang:1.17 as builder
+FROM golang:1.17 as build
 
-ENV GO111MODULE=on
-
+RUN mkdir /app
 WORKDIR /app
+
 
 COPY go.mod .
 COPY go.sum .
+
 RUN go mod download
-COPY . ./
-RUN go build -o app/cmd
+
+COPY . .
+
+RUN go build -o golang-short
 
 EXPOSE 8080
 
-CMD ["./golang-url-short"]
+ENTRYPOINT ["/short/cmd/main"]

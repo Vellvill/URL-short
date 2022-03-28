@@ -16,9 +16,7 @@ services:
     container_name: url_cutter_server
     build:
       dockerfile: Dockerfile
-      context: dev
-    networks:
-      - default
+      context: .
     restart: on-failure
     ports:
       - 8080:8080
@@ -33,10 +31,30 @@ services:
       - prometheus
 
   postgres:
-    image: postgres
+    image: postgres:latest
     environment:
-      POSTGRES_DB: "postgres"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "12345"
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=postgres
     ports:
-      - 54320:5432
+      - "5432:5432"
+    restart: always
+    volumes:
+      - database-data:/var/lib/postgresql/datas/
+
+
+
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
+      - PGADMIN_DEFAULT_PASSWORD=admin1234
+    ports:
+      - '5050:80'
+    restart: always
+    volumes:
+      - pgadmin:/root/.pgadmin
+volumes:
+  database-data:
+  pgadmin:

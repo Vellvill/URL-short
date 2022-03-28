@@ -34,8 +34,6 @@ func main() {
 
 	http.HandleFunc("/", metricsMiddleware.Metrics(impl.RedirectToUrl))
 
-	http.HandleFunc("/get_stats/", impl.CheckStats)
-
 	http.HandleFunc("/check_status", impl.CheckStatus)
 
 	start(cfg)

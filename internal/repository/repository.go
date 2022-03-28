@@ -44,7 +44,7 @@ func startStatus(chStart chan<- struct{}, chDone <-chan struct{}) {
 }
 
 func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
-	if err := r.client.QueryRow(ctx, "insert into url (longurl, shorturl, numbersofredirect) values ($1, $2, $3) returning shorturl", url.Longurl, utils.Encode(), url.Numbersofredirect).Scan(&url.Shorturl); err != nil {
+	if err := r.client.QueryRow(ctx, "insert into url (longurl, shorturl) values ($1, $2) returning shorturl", url.Longurl, utils.Encode()).Scan(&url.Shorturl); err != nil {
 		//может быть nil в контексте таблицы
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			switch {
@@ -65,20 +65,16 @@ func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
 }
 
 func (r *repository) GetLink(ctx context.Context, shortUrl string) (string, error) {
-	url := models.NewModelURL(0, "", shortUrl, 0, "")
+	url := models.NewModelURL(0, "", shortUrl, "")
 	err := r.client.QueryRow(ctx, "SELECT longurl FROM public.url WHERE shorturl = $1", url.Shorturl).Scan(&url.Longurl)
 	if err != nil {
 		return "", err
-	}
-	_, err = r.client.Exec(ctx, "update public.url set numbersofredirect = numbersofredirect + 1 where shorturl = $1", url.Shorturl)
-	if err != nil {
-		log.Println(err)
 	}
 	return url.Longurl, nil
 }
 
 func (r *repository) GetStats(ctx context.Context, url *models.Url) error {
-	err := r.client.QueryRow(ctx, "Select longurl, numbersofredirect from public.url where shorturl = $1", url.Shorturl).Scan(&url.Longurl, &url.Numbersofredirect)
+	err := r.client.QueryRow(ctx, "Select longurl, numbersofredirect from public.url where shorturl = $1", url.Shorturl).Scan(&url.Longurl)
 	if err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.SQLState()))
@@ -99,7 +95,7 @@ func (r *repository) FindAll(ctx context.Context) (u []models.Url, err error) {
 	for rows.Next() {
 		var url models.Url
 
-		err = rows.Scan(&url.ID, &url.Longurl, &url.Shorturl, &url.Numbersofredirect, &url.Status)
+		err = rows.Scan(&url.ID, &url.Longurl, &url.Shorturl, &url.Status)
 		if err != nil {
 			return nil, err
 		}

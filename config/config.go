@@ -25,7 +25,7 @@ type Storage struct {
 }
 
 var instance *Config //singleton
-var once sync.Once   //1 раз
+var once sync.Once
 
 func GetConfig() *Config {
 	once.Do(func() {

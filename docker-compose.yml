@@ -8,53 +8,40 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
     ports:
-      - 9090:9090
+      - "9090:9090"
     depends_on:
       - server
 
   server:
-    container_name: url_cutter_server
+    container_name: new_url_cutter
     build:
       dockerfile: Dockerfile
       context: .
     restart: on-failure
     ports:
-      - 8080:8080
+      - "5000:5000"
     depends_on:
-      - postgres
+      - db
 
   grafana:
     image: grafana/grafana:latest
     ports:
-      - 3000:3000
+      - "3000:3000"
     depends_on:
       - prometheus
 
-  postgres:
+  db:
     image: postgres:latest
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=12345
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
     ports:
       - "5432:5432"
     restart: always
     volumes:
-      - database-data:/var/lib/postgresql/datas/
+      - ./database-data:/var/lib/postgresql/datas/
 
-
-
-
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
-      - PGADMIN_DEFAULT_PASSWORD=admin1234
-    ports:
-      - '5050:80'
-    restart: always
-    volumes:
-      - pgadmin:/root/.pgadmin
 volumes:
   database-data:
-  pgadmin:
+

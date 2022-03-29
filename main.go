@@ -12,19 +12,34 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 )
 
 func main() {
+
+	for i := 0; i < 31; i++ {
+		time.Sleep(1 * time.Second)
+		log.Printf("Waiting %d/30", i)
+	}
+
 	cfg := config.GetConfig()
 
 	client, err := postgres.NewClient(context.TODO(), cfg.Storage)
 	if err != nil {
-		log.Fatal()
+		log.Fatal("Error with creating postgres client, err:", err)
+	} else {
+		log.Printf("Succsess for connectiong to DB, storage cfg: %#v", cfg.Storage)
 	}
 
-	repo := repository.NewRepository(client)
+	repo, err := repository.NewRepository(client)
+	if err == nil {
+		log.Printf("New repository created, %#v", repo)
+	}
 
-	impl := service.New(repo)
+	impl, err := service.New(repo)
+	if err == nil {
+		log.Printf("Implementation succsess")
+	}
 
 	metricsMiddleware := middleware.NewMetricsMiddleware()
 
@@ -36,18 +51,21 @@ func main() {
 
 	http.HandleFunc("/check_status", impl.CheckStatus)
 
-	start(cfg)
+	err = start(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("server is listening %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
 }
 
-func start(cfg *config.Config) {
+func start(cfg *config.Config) error {
 	listner, err := net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIp, cfg.Listen.Port))
 	if err != nil {
-		log.Fatal()
+		return err
 	}
 
 	if err = http.Serve(listner, nil); err != nil {
-		log.Fatal()
+		return err
 	}
-
-	log.Printf("server is listening %s:%s", cfg.Listen.BindIp, cfg.Listen.Port)
+	return nil
 }

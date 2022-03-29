@@ -1,20 +1,17 @@
 FROM golang:1.17 as build
 
-RUN mkdir /app
 WORKDIR /app
 
-COPY go.mod .
+COPY go.mod ./
 
-COPY go.sum .
+COPY go.sum ./
 
 RUN go mod download
 
-COPY . .
+COPY . ./
 
-ENV PORT 8080
+RUN go build -o metrics
 
-WORKDIR ./cmd
+EXPOSE 3535
 
-RUN go build -o ./cmd
-
-CMD ["./cmd"]
+ENTRYPOINT ["/app/metrics"]

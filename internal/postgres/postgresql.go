@@ -36,5 +36,6 @@ func NewClient(ctx context.Context, cfg config.Storage) (pool *pgxpool.Pool, err
 	if err != nil {
 		log.Fatal()
 	}
+
 	return pool, nil
 }

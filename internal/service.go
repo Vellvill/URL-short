@@ -6,6 +6,6 @@ type Implementation struct {
 	repo usecases.Repository
 }
 
-func New(repo usecases.Repository) Implementation {
-	return Implementation{repo: repo}
+func New(repo usecases.Repository) (Implementation, error) {
+	return Implementation{repo: repo}, nil
 }

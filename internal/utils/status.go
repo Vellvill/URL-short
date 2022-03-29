@@ -3,6 +3,7 @@ package utils
 import (
 	"NewOne/internal/models"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -21,5 +22,6 @@ func Check(s *models.Url) error {
 		s.Status = fmt.Sprintf("Error conntecton, %s", err)
 	}
 	s.Status = fmt.Sprintf("Online")
+	log.Printf("STATUS SYSTEM: %s status: %s", s.Longurl, s.Status)
 	return nil
 }

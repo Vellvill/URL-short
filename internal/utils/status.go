@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"NewOne/internal/models"
+	"UrlShort/internal/models"
 	"fmt"
 	"log"
 	"net/http"

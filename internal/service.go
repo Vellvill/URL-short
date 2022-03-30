@@ -1,6 +1,6 @@
 package service
 
-import "NewOne/internal/usecases"
+import "UrlShort/internal/usecases"
 
 type Implementation struct {
 	repo usecases.Repository

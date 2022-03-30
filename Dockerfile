@@ -12,6 +12,6 @@ COPY . ./
 
 RUN go build -o metrics
 
-EXPOSE 3535
+EXPOSE 8080
 
 ENTRYPOINT ["/app/metrics"]

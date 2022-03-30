@@ -4,7 +4,8 @@ is_debug: true
 listen:
   type: port
   bind_ip: localhost
-  port: 5000
+  port: 8080
+
 storage:
   host: db
   port: 5432

@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"NewOne/internal/models"
-	"NewOne/internal/postgres"
-	"NewOne/internal/usecases"
-	"NewOne/internal/utils"
+	"UrlShort/internal/models"
+	"UrlShort/internal/postgres"
+	"UrlShort/internal/usecases"
+	"UrlShort/internal/utils"
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
@@ -14,6 +14,7 @@ import (
 )
 
 type repository struct {
+	sync.Mutex
 	client postgres.Client
 }
 
@@ -21,12 +22,16 @@ func NewRepository(client postgres.Client) (usecases.Repository, error) {
 	repo := &repository{
 		client: client,
 	}
+	err := repo.AddStartLink(context.Background())
+	if err != nil {
+		log.Println(err)
+	}
 	chStart := make(chan struct{}, 1)
 	chDone := make(chan struct{})
 
 	chStart <- struct{}{}
 
-	log.Println("Starting status system")
+	log.Println("STATUS SYSTEM: Starting status system")
 	go func() {
 		err := repo.Status(context.TODO(), chStart, chDone)
 		if err != nil {
@@ -50,13 +55,47 @@ func startStatus(chStart chan<- struct{}, chDone <-chan struct{}) {
 	}()
 }
 
+func (r *repository) AddStartLink(ctx context.Context) error {
+	var added string
+	q := `
+	INSERT INTO url
+		(longurl, shorturl)
+	VALUES
+		($1, $2)
+	ON CONFLICT DO NOTHING
+	RETURNING longurl
+	`
+	if err := r.client.QueryRow(ctx, q, "https://yandex.ru/", "11111").Scan(&added); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.SQLState()))
+			return newErr
+		} else {
+			return err
+		}
+	}
+	log.Println("Added 1 start link, link:%s", added)
+	return nil
+}
+
 func (r *repository) AddLink(ctx context.Context, url *models.Url) error {
-	if err := r.client.QueryRow(ctx, "insert into url (longurl, shorturl) values ($1, $2) returning shorturl", url.Longurl, utils.Encode()).Scan(&url.Shorturl); err != nil {
+	q := `
+	insert into url 
+		(longurl, shorturl) 
+	values 
+		($1, $2) 
+	returning shorturl
+`
+	if err := r.client.QueryRow(ctx, q, url.Longurl, utils.Encode()).Scan(&url.Shorturl); err != nil {
 		//может быть nil в контексте таблицы
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			switch {
 			case pgErr.Code == "23505":
-				err = r.client.QueryRow(ctx, "select shorturl from url where longurl = $1", url.Longurl).Scan(&url.Shorturl)
+				qErr := `
+	select 
+		shorturl 
+	from url 
+		where longurl = $1`
+				err = r.client.QueryRow(ctx, qErr, url.Longurl).Scan(&url.Shorturl)
 				if err != nil {
 					log.Println(err)
 				}
@@ -78,41 +117,6 @@ func (r *repository) GetLink(ctx context.Context, shortUrl string) (string, erro
 		return "", err
 	}
 	return url.Longurl, nil
-}
-
-func (r *repository) GetStats(ctx context.Context, url *models.Url) error {
-	err := r.client.QueryRow(ctx, "Select longurl, from url where shorturl = $1", url.Shorturl).Scan(&url.Longurl)
-	if err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			newErr := fmt.Errorf(fmt.Sprintf("SQL Error: %s, Detail: %s, Where: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.SQLState()))
-			return newErr
-		}
-		return err
-	}
-	return nil
-}
-
-func (r *repository) FindAll(ctx context.Context) (u []models.Url, err error) {
-	rows, err := r.client.Query(ctx, "select id, longurl, shorturl, status from url")
-	if err != nil {
-		return nil, err
-	}
-	urls := make([]models.Url, 0)
-
-	for rows.Next() {
-		var url models.Url
-
-		err = rows.Scan(&url.ID, &url.Longurl, &url.Shorturl, &url.Status)
-		if err != nil {
-			return nil, err
-		}
-		urls = append(urls, url)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return urls, nil
 }
 
 func (r *repository) Status(ctx context.Context, ChStart <-chan struct{}, done chan<- struct{}) error {
@@ -145,9 +149,11 @@ func (r *repository) Status(ctx context.Context, ChStart <-chan struct{}, done c
 						where 
       						longurl = $2
 `
+					r.Lock()
 					if _, err = r.client.Exec(ctx, q, url.Status, url.Longurl); err != nil {
 						log.Println(err)
 					}
+					r.Unlock()
 				}(url)
 			}
 			wg.Wait()

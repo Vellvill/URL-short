@@ -1,7 +1,7 @@
 package service
 
 import (
-	"NewOne/internal/models"
+	"UrlShort/internal/models"
 	"context"
 	"fmt"
 	"log"
@@ -37,14 +37,4 @@ func (i *Implementation) RedirectToUrl(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 	http.Redirect(w, r, link, 301) //
-}
-
-func (i *Implementation) CheckStatus(w http.ResponseWriter, r *http.Request) {
-	array, err := i.repo.FindAll(context.TODO())
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, v := range array {
-		w.Write([]byte(fmt.Sprintf("ID: %d, Long url: %s, Short url: %s, Status: %s\n\n", v.ID, v.Longurl, v.Shorturl, v.Status)))
-	}
 }

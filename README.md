@@ -46,6 +46,9 @@ The status system takes 300 links, which are ordered by url.id.
 ## Prometheus and grafana
 Prometheus is scraping every 10 minutes (btw you can change it in `prometheus -> prometheus.yml` which is config) every handlers using, and also it scrap count of redirects. In docker-compose there is also grafana for visualization metrics, but you can use `localhost:8080/metrics` for checking it out.
 ![image](https://user-images.githubusercontent.com/93131551/160903555-27215209-2928-48d6-b3e8-422e8d6e7689.png)
+metrics:
+![image](https://user-images.githubusercontent.com/93131551/160904044-76e18443-97e3-4a0a-b6de-205e995ba889.png)
+
 ## pgadmin
 You can also use pgadmin for administrating your db. It starts on 5050 port.
 ## docker-compose

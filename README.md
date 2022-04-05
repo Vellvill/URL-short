@@ -26,6 +26,12 @@ Next function will create first start link which is `http://yandex.ru`
 ```golang
 func (r *repository) AddStartLink(ctx context.Context) error 
 ```
+## Database
+This is an example of a ready-made Postgresql database schema
+
+![image](https://user-images.githubusercontent.com/93131551/161843849-774916e4-793d-4747-88aa-73ac4514b193.png)
+
+
 ## Status system
 This is a gorutine system which checking status of url's every 10 minutes. It starts by sending an empty struct to special channel.
 ```golang
